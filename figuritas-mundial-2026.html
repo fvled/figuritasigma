@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>🏆 figuritas Mundial 2026</title>
+<meta name="description" content="Gestor de album de figurital del mundial">
+<style>
+/* =====================================================
+   aguanten los wachines del docke
+   ===================================================== */
+:root {
+  --bg: #0f1117;
+  --bg2: #181c24;
+  --bg3: #1e2330;
+  --border: #2a3040;
+  --text: #e8eaf0;
+  --text2: #9ba3b8;
+  --text3: #5c6478;
+  --accent: #f5c842;       /* gold - FIFA trophy */
+  --accent2: #2dd4a0;      /* emerald - pitch green */
+  --danger: #e85555;
+  --badge-bg: #252b3a;
+  --badge-owned: #1a3a2a;
+  --cell-owned: #2dd4a0;
+  --cell-owned-bg: #0d2b20;
+  --cell-empty: #252b3a;
+  --progress-bg: #1e2330;
+  --progress-fill: #2dd4a0;
+  --toast-bg: #2dd4a0;
+  --toast-text: #0a1a14;
+  --shadow: 0 2px 12px rgba(0,0,0,.4);
+  --radius: 8px;
+  --radius-sm: 4px;
+  font-size: 15px;
+}
+
+[data-theme="light"] {
+  --bg: #f0f2f7;
+  --bg2: #ffffff;
+  --bg3: #e8eaf2;
+  --border: #d0d5e8;
+  --text: #141820;
+  --text2: #4a5270;
+  --text3: #8890aa;
+  --accent: #c49a00;
+  --accent2: #178a66;
+  --badge-bg: #e8eaf2;
+  --badge-owned: #d0f0e4;
+  --cell-owned: #178a66;
+  --cell-owned-bg: #d8f4ea;
+  --cell-empty: #e8eaf2;
+  --progress-bg: #dde0ec;
+  --progress-fill: #178a66;
+  --toast-bg: #178a66;
+  --toast-text: #fff;
+  --shadow: 0 2px 12px rgba(0,0,0,.12);
+}
+
+/* =====================================================
+   reset + base
+   ===================================================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  line-height: 1.5;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* =====================================================
+   layout
+   ===================================================== */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* =====================================================
+   header
+   ===================================================== */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px 8px;
+}
+
+.app-logo {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+  white-space: nowrap;
+}
+
+.app-logo span {
+  color: var(--text);
+  font-weight: 400;
+}
+
+.header-controls {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+  align-items: center;
+}
+
+.btn-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: var(--bg3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  border: 1px solid var(--border);
+  transition: background .15s;
+}
+.btn-icon:hover { background: var(--border); }
+.btn-icon.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+.search-bar {
+  padding: 0 16px 10px;
+}
+
+.search-input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  color: var(--text);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color .15s;
+}
+.search-input:focus { border-color: var(--accent2); }
+.search-input::placeholder { color: var(--text3); }
+
+/* =====================================================
+   barra de stats globales
+   ===================================================== */
+.global-stats {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+}
+
+.global-stat-text {
+  font-size: 0.8rem;
+  color: var(--text2);
+  margin-bottom: 6px;
+}
+
+.progress-bar {
+  height: 5px;
+  background: var(--progress-bg);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.progress-bar-inner {
+  height: 100%;
+  background: var(--progress-fill);
+  border-radius: 99px;
+  transition: width .3s ease;
+}
+
+.global-bar { margin: 0; }
+.global-bar .progress-bar-inner { background: var(--accent); }
+
+/* =====================================================
+   tab nav
+   ===================================================== */
+.tab-nav {
+  display: flex;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.tab-nav::-webkit-scrollbar { display: none; }
+
+.tab-btn {
+  flex: 1;
+  min-width: 70px;
+  padding: 10px 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text2);
+  border-bottom: 2px solid transparent;
+  transition: color .15s, border-color .15s;
+  white-space: nowrap;
+  text-align: center;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* =====================================================
+   area de conteniido
+   ===================================================== */
+.content {
+  flex: 1;
+  padding: 12px 12px 80px;
+  overflow: hidden;
+}
+
+/* =====================================================
+   seccion de selecciones
+   ===================================================== */
+.team-section {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px 6px;
+  gap: 8px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.team-flag { font-size: 1.2rem; flex-shrink: 0; }
+.team-name { font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.group-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-radius: 3px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+}
+
+.section-stat {
+  font-size: 0.72rem;
+  color: var(--text2);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.progress-bar { margin: 0 12px 10px; }
+
+/* =====================================================
+   cuadricula de figuritas
+   ===================================================== */
+.sticker-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 3px;
+  padding: 0 10px 10px;
+}
+
+@media (max-width: 480px) {
+  .sticker-grid { grid-template-columns: repeat(10, 1fr); gap: 2px; }
+}
+
+.sticker-cell {
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background: var(--cell-empty);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: var(--text3);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform .1s, background .15s, color .15s;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+}
+
+.sticker-cell:hover {
+  transform: scale(1.15);
+  z-index: 2;
+  border-color: var(--accent2);
+}
+
+.sticker-cell.owned {
+  background: var(--cell-owned-bg);
+  color: var(--cell-owned);
+  border-color: color-mix(in srgb, var(--cell-owned) 40%, transparent);
+}
+
+.sticker-cell.owned::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border-radius: 2px;
+  background: var(--cell-owned);
+  opacity: 0.25;
+}
+
+.sticker-cell.fwc.owned {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.sticker-cell.fwc.owned::after { background: var(--accent); }
+
+/* =====================================================
+   vista en lista de las figuritas
+   ===================================================== */
+.sticker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 0 10px 10px;
+}
+
+.sticker-list-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.list-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--cell-empty);
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text2);
+  transition: background .15s, color .15s;
+  aspect-ratio: unset;
+  height: auto;
+}
+.list-cell.owned { background: var(--cell-owned-bg); color: var(--cell-owned); }
+.list-cell .check-icon { font-size: 0.9rem; }
+.list-cell.fwc.owned { background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent); }
+
+.repeat-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.repeat-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1;
+  transition: background .15s;
+}
+.repeat-btn:hover { background: var(--accent); color: #000; border-color: var(--accent); }
+
+.repeat-count {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text2);
+  width: 20px;
+  text-align: center;
+}
+
+/* =====================================================
+   pestana de me faltan
+   ===================================================== */
+.missing-group {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 10px;
+}
+.missing-group h3 {
+  font-size: 0.88rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.missing-count {
+  font-size: 0.72rem;
+  color: var(--danger);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  border-radius: 10px;
+  padding: 1px 7px;
+}
+.missing-nums { display: flex; flex-wrap: wrap; gap: 4px; }
+.missing-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  background: var(--badge-bg);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text2);
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: background .1s, color .1s;
+}
+.missing-badge:hover { border-color: var(--accent2); color: var(--accent2); }
+.missing-badge.owned-badge { background: var(--badge-owned); color: var(--accent2); border-color: var(--accent2); }
+
+/* =====================================================
+   pestana de repetidas
+   ===================================================== */
+.repeated-group {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 10px;
+}
+.repeated-group h3 { font-size: 0.88rem; font-weight: 700; margin-bottom: 10px; }
+.repeat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--bg3);
+  margin-bottom: 4px;
+}
+.rep-id { font-size: 0.82rem; font-weight: 700; color: var(--text2); font-family: monospace; }
+
+/* =====================================================
+   pestanas de compartir o cambiar
+   ===================================================== */
+.share-panel, .trade-panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #000;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  transition: opacity .15s;
+}
+.btn-primary:hover { opacity: .85; }
+
+.btn-secondary {
+  background: var(--bg3);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.82rem;
+  padding: 9px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  transition: border-color .15s;
+}
+.btn-secondary:hover { border-color: var(--accent2); }
+
+.dropdown-group { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.share-preview {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  font-size: 0.8rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  max-height: 500px;
+  overflow-y: auto;
+  color: var(--text);
+  font-family: "SF Mono", "Fira Code", Consolas, monospace;
+}
+
+.trade-hint { font-size: 0.85rem; color: var(--text2); margin-bottom: 10px; }
+.friend-textarea {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  color: var(--text);
+  font-size: 0.82rem;
+  resize: vertical;
+  margin-bottom: 10px;
+  font-family: monospace;
+  outline: none;
+}
+.friend-textarea:focus { border-color: var(--accent2); }
+#trade-result { margin-top: 16px; }
+
+.trade-panel h3 { font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
+
+/* =====================================================
+   empty state
+   ===================================================== */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text2);
+  font-size: 0.95rem;
+}
+
+/* =====================================================
+   toast
+   ===================================================== */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--toast-bg);
+  color: var(--toast-text);
+  padding: 10px 20px;
+  border-radius: 99px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  opacity: 0;
+  transition: opacity .25s, transform .25s;
+  z-index: 1000;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.toast.toast-show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* =====================================================
+   numero de figu
+   ===================================================== */
+.sticker-num { font-size: inherit; line-height: 1; }
+
+/* =====================================================
+   responsive
+   ===================================================== */
+@media (max-width: 380px) {
+  .sticker-grid { grid-template-columns: repeat(10, 1fr); gap: 2px; }
+  .sticker-cell { font-size: 0.45rem; }
+  .app-logo { font-size: 1.05rem; }
+}
+
+@media (min-width: 600px) {
+  .sticker-grid { grid-template-columns: repeat(10, 1fr); }
+  .content { padding: 16px 16px 80px; }
+}
+
+@media (min-width: 900px) {
+  .sticker-grid { gap: 4px; }
+}
+
+/* =====================================================
+   scrollbar (es para estetica btw)
+   ===================================================== */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+/* =====================================================
+   accesibilidad
+   ===================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; }
+}
+
+.sticker-cell:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  z-index: 3;
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="header-top">
+      <div class="app-logo">⚽ Figuritas <span>Mundial 2026</span></div>
+      <div class="header-controls">
+        <button class="btn-icon btn-view-grid active" title="Vista cuadrícula" aria-label="Vista cuadrícula">⊞</button>
+        <button class="btn-icon btn-view-list" title="Vista lista" aria-label="Vista lista">☰</button>
+        <button class="btn-icon btn-theme" title="Cambiar tema" aria-label="Cambiar tema">☀️</button>
+      </div>
+    </div>
+    <div class="search-bar">
+      <input class="search-input" type="search" placeholder="🔍  Buscar selección, número, categoría..." autocomplete="off" spellcheck="false">
+    </div>
+  </header>
+
+  <!-- GLOBAL STATS -->
+  <div class="global-stats">
+    <div class="global-stat-text">Cargando...</div>
+    <div class="progress-bar global-bar">
+      <div class="progress-bar-inner global-bar-inner" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- TAB NAVIGATION -->
+  <nav class="tab-nav" role="tablist">
+    <button class="tab-btn active" data-tab="album" role="tab" aria-selected="true">📖 Álbum</button>
+    <button class="tab-btn" data-tab="missing" role="tab" aria-selected="false">❌ Faltantes</button>
+    <button class="tab-btn" data-tab="repeated" role="tab" aria-selected="false">🔁 Repetidas</button>
+    <button class="tab-btn" data-tab="share" role="tab" aria-selected="false">📤 Compartir</button>
+    <button class="tab-btn" data-tab="trade" role="tab" aria-selected="false">🤝 Intercambio</button>
+  </nav>
+
+  <!-- CONTENT -->
+  <main class="content" role="main">
+    <div class="empty-state">Cargando álbum...</div>
+  </main>
+
+</div>
+
+<script>
+// ===== FIGURITAS MUNDIAL 2026 - bundle =====
+
+// ============================================================
+// DATA: 48 selecciones del mundial 2026 + especiales FWC
+// ============================================================
+const TEAMS = [
+    // Grupo A
+    { id: "mex", name: "México", flag: "🇲🇽", group: "A", count: 20 },
+    { id: "rsa", name: "Sudáfrica", flag: "🇿🇦", group: "A", count: 20 },
+    { id: "kor", name: "Corea del Sur", flag: "🇰🇷", group: "A", count: 20 },
+    { id: "cze", name: "Chequia", flag: "🇨🇿", group: "A", count: 20 },
+    // Grupo B
+    { id: "can", name: "Canadá", flag: "🇨🇦", group: "B", count: 20 },
+    { id: "bih", name: "Bosnia y Herzegovina", flag: "🇧🇦", group: "B", count: 20 },
+    { id: "qat", name: "Qatar", flag: "🇶🇦", group: "B", count: 20 },
+    { id: "sui", name: "Suiza", flag: "🇨🇭", group: "B", count: 20 },
+    // Grupo C
+    { id: "bra", name: "Brasil", flag: "🇧🇷", group: "C", count: 20 },
+    { id: "mar", name: "Marruecos", flag: "🇲🇦", group: "C", count: 20 },
+    { id: "hai", name: "Haití", flag: "🇭🇹", group: "C", count: 20 },
+    { id: "sco", name: "Escocia", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", group: "C", count: 20 },
+    // Grupo D
+    { id: "usa", name: "Estados Unidos", flag: "🇺🇸", group: "D", count: 20 },
+    { id: "par", name: "Paraguay", flag: "🇵🇾", group: "D", count: 20 },
+    { id: "aus", name: "Australia", flag: "🇦🇺", group: "D", count: 20 },
+    { id: "tur", name: "Turquía", flag: "🇹🇷", group: "D", count: 20 },
+    // Grupo E
+    { id: "ger", name: "Alemania", flag: "🇩🇪", group: "E", count: 20 },
+    { id: "cur", name: "Curazao", flag: "🇨🇼", group: "E", count: 20 },
+    { id: "civ", name: "Costa de Marfil", flag: "🇨🇮", group: "E", count: 20 },
+    { id: "ecu", name: "Ecuador", flag: "🇪🇨", group: "E", count: 20 },
+    // Grupo F
+    { id: "ned", name: "Países Bajos", flag: "🇳🇱", group: "F", count: 20 },
+    { id: "jpn", name: "Japón", flag: "🇯🇵", group: "F", count: 20 },
+    { id: "swe", name: "Suecia", flag: "🇸🇪", group: "F", count: 20 },
+    { id: "tun", name: "Túnez", flag: "🇹🇳", group: "F", count: 20 },
+    // Grupo G
+    { id: "bel", name: "Bélgica", flag: "🇧🇪", group: "G", count: 20 },
+    { id: "egy", name: "Egipto", flag: "🇪🇬", group: "G", count: 20 },
+    { id: "iri", name: "Irán", flag: "🇮🇷", group: "G", count: 20 },
+    { id: "nzl", name: "Nueva Zelanda", flag: "🇳🇿", group: "G", count: 20 },
+    // Grupo H
+    { id: "esp", name: "España", flag: "🇪🇸", group: "H", count: 20 },
+    { id: "cpv", name: "Cabo Verde", flag: "🇨🇻", group: "H", count: 20 },
+    { id: "ksa", name: "Arabia Saudí", flag: "🇸🇦", group: "H", count: 20 },
+    { id: "uru", name: "Uruguay", flag: "🇺🇾", group: "H", count: 20 },
+    // Grupo I
+    { id: "fra", name: "Francia", flag: "🇫🇷", group: "I", count: 20 },
+    { id: "sen", name: "Senegal", flag: "🇸🇳", group: "I", count: 20 },
+    { id: "irq", name: "Irak", flag: "🇮🇶", group: "I", count: 20 },
+    { id: "nor", name: "Noruega", flag: "🇳🇴", group: "I", count: 20 },
+    // Grupo J
+    { id: "arg", name: "Argentina", flag: "🇦🇷", group: "J", count: 20 },
+    { id: "alg", name: "Argelia", flag: "🇩🇿", group: "J", count: 20 },
+    { id: "aut", name: "Austria", flag: "🇦🇹", group: "J", count: 20 },
+    { id: "jor", name: "Jordania", flag: "🇯🇴", group: "J", count: 20 },
+    // Grupo K
+    { id: "por", name: "Portugal", flag: "🇵🇹", group: "K", count: 20 },
+    { id: "cod", name: "R.D. Congo", flag: "🇨🇩", group: "K", count: 20 },
+    { id: "uzb", name: "Uzbekistán", flag: "🇺🇿", group: "K", count: 20 },
+    { id: "col", name: "Colombia", flag: "🇨🇴", group: "K", count: 20 },
+    // Grupo L
+    { id: "eng", name: "Inglaterra", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", group: "L", count: 20 },
+    { id: "cro", name: "Croacia", flag: "🇭🇷", group: "L", count: 20 },
+    { id: "gha", name: "Ghana", flag: "🇬🇭", group: "L", count: 20 },
+    { id: "pan", name: "Panamá", flag: "🇵🇦", group: "L", count: 20 },
+];
+// FWC especiales: 20 figuritas numeradas 00–19
+const FWC_CATEGORIES = [
+    { id: "fwc-ball", name: "Balón y Países", icon: "⚽", numbers: [0, 1, 2, 3, 4] },
+    { id: "fwc-hist", name: "Historia", icon: "📜", numbers: [5, 6, 7, 8] },
+    { id: "fwc-road", name: "Camino al Mundial", icon: "🌎", numbers: [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19] },
+];
+const FWC_TOTAL = 20; // 0–19
+const TOTAL_STICKERS = TEAMS.length * 20 + FWC_TOTAL; // 48*20 + 20 = 980
+
+
+// ============================================================
+// ALMACENAR: indexedDB + in-memory state, sin dependencias
+// ============================================================
+const DB_NAME = "figuritas_wc2026";
+const DB_VERSION = 1;
+const STORE_NAME = "collection";
+const KEY_ALL = "all";
+let db = null;
+async function openDB() {
+    if (db)
+        return db;
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = () => {
+            req.result.createObjectStore(STORE_NAME);
+        };
+        req.onsuccess = () => { db = req.result; resolve(db); };
+        req.onerror = () => reject(req.error);
+    });
+}
+async function getStore(mode) {
+    const database = await openDB();
+    return database.transaction(STORE_NAME, mode).objectStore(STORE_NAME);
+}
+// serialize map → plain object for IDB
+function serialize(map) {
+    const obj = {};
+    map.forEach((v, k) => { obj[k] = v; });
+    return obj;
+}
+function deserialize(obj) {
+    const map = new Map();
+    for (const [k, v] of Object.entries(obj)) {
+        map.set(k, v);
+    }
+    return map;
+}
+async function loadCollection() {
+    try {
+        const store = await getStore("readonly");
+        return new Promise((resolve) => {
+            const req = store.get(KEY_ALL);
+            req.onsuccess = () => {
+                resolve(req.result ? deserialize(req.result) : new Map());
+            };
+            req.onerror = () => resolve(new Map());
+        });
+    }
+    catch {
+        return new Map();
+    }
+}
+// debounced save
+let saveTimer = null;
+function scheduleSave(collection) {
+    if (saveTimer)
+        clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => persistCollection(collection), 300);
+}
+async function persistCollection(collection) {
+    try {
+        const store = await getStore("readwrite");
+        store.put(serialize(collection), KEY_ALL);
+    }
+    catch (e) {
+        console.warn("Save failed", e);
+    }
+}
+// ---- business logic ----
+function toggleOwned(collection, id) {
+    const cur = collection.get(id);
+    if (cur?.owned) {
+        collection.set(id, { owned: false, repeated: 0 });
+    }
+    else {
+        collection.set(id, { owned: true, repeated: cur?.repeated ?? 0 });
+    }
+}
+function adjustRepeated(collection, id, delta) {
+    const cur = collection.get(id) ?? { owned: false, repeated: 0 };
+    const repeated = Math.max(0, (cur.repeated ?? 0) + delta);
+    collection.set(id, { ...cur, repeated });
+}
+function getOwned(collection, id) {
+    return collection.get(id)?.owned ?? false;
+}
+function getRepeated(collection, id) {
+    return collection.get(id)?.repeated ?? 0;
+}
+
+
+// ============================================================
+// COMPARTIR: importar o exportar texto para mandarselas a un amigo y comparar.
+// ============================================================
+
+
+function fmtNum(n) {
+    return String(n).padStart(2, "0");
+}
+function generateShareText(collection) {
+    const lines = [];
+    const bar = "━━━━━━━━━━━━━━━";
+    // me faltan..
+    lines.push(bar, "📕 mis faltantes", bar, "");
+    let hasMissing = false;
+    for (const team of TEAMS) {
+        const missing = [];
+        for (let i = 1; i <= team.count; i++) {
+            const id = `${team.id}-${fmtNum(i)}`;
+            if (!getOwned(collection, id))
+                missing.push(i);
+        }
+        if (missing.length) {
+            hasMissing = true;
+            lines.push(`${team.flag} ${team.name}`);
+            lines.push("• " + missing.map(fmtNum).join(", "));
+            lines.push("");
+        }
+    }
+    // me faltan de FWC
+    const fwcMissing = [];
+    for (let i = 0; i < FWC_TOTAL; i++) {
+        if (!getOwned(collection, `fwc-${fmtNum(i)}`))
+            fwcMissing.push(i);
+    }
+    if (fwcMissing.length) {
+        hasMissing = true;
+        lines.push("🏆 FWC - Especiales");
+        lines.push("• " + fwcMissing.map(fmtNum).join(", "));
+        lines.push("");
+    }
+    if (!hasMissing)
+        lines.push("¡Ninguna! Álbum completo 🎉", "");
+    // repetidaws
+    lines.push(bar, "📘 mis repetidas", bar, "");
+    let hasRepeated = false;
+    for (const team of TEAMS) {
+        const reps = [];
+        for (let i = 1; i <= team.count; i++) {
+            const id = `${team.id}-${fmtNum(i)}`;
+            const r = getRepeated(collection, id);
+            if (r > 0)
+                reps.push(`${fmtNum(i)} ×${r}`);
+        }
+        if (reps.length) {
+            hasRepeated = true;
+            lines.push(`${team.flag} ${team.name}`);
+            lines.push(...reps.map(r => `• ${r}`));
+            lines.push("");
+        }
+    }
+    const fwcReps = [];
+    for (let i = 0; i < FWC_TOTAL; i++) {
+        const id = `fwc-${fmtNum(i)}`;
+        const r = getRepeated(collection, id);
+        if (r > 0)
+            fwcReps.push(`fwc-${fmtNum(i)} ×${r}`);
+    }
+    if (fwcReps.length) {
+        hasRepeated = true;
+        lines.push("🏆 Especiales");
+        lines.push(...fwcReps.map(r => `• ${r}`));
+        lines.push("");
+    }
+    if (!hasRepeated)
+        lines.push("Sin repetidas", "");
+    // resumen
+    let owned = 0, missing = 0, repeated = 0;
+    const total = TEAMS.length * 20 + FWC_TOTAL;
+    const allIds = [];
+    for (const t of TEAMS)
+        for (let i = 1; i <= 20; i++)
+            allIds.push(`${t.id}-${fmtNum(i)}`);
+    for (let i = 0; i < FWC_TOTAL; i++)
+        allIds.push(`fwc-${fmtNum(i)}`);
+    for (const id of allIds) {
+        if (getOwned(collection, id)) {
+            owned++;
+            repeated += getRepeated(collection, id);
+        }
+        else
+            missing++;
+    }
+    lines.push(bar, "📊 resumen", bar, "");
+    lines.push(`✅ completadas: ${owned}`);
+    lines.push(`❌ faltantes: ${missing}`);
+    lines.push(`🔁 repetidas: ${repeated}`);
+    return lines.join("\n");
+}
+function parseExportText(text) {
+    const missing = new Set();
+    const repeated = new Map();
+    const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+    let mode = null;
+    let currentTeamId = null;
+    for (const line of lines) {
+        if (line.includes("mis faltantes")) {
+            mode = "missing";
+            currentTeamId = null;
+            continue;
+        }
+        if (line.includes("mis repetidas")) {
+            mode = "repeated";
+            currentTeamId = null;
+            continue;
+        }
+        if (line.includes("resumen") || line.startsWith("━")) {
+            continue;
+        }
+        if (line.startsWith("✅") || line.startsWith("❌") || line.startsWith("🔁"))
+            continue;
+        if (mode === null)
+            continue;
+        // detectar el encabezado de equipo — comparar contra equipos conocidos
+        let matchedTeam = null;
+        for (const t of TEAMS) {
+            if (line.includes(t.name) || line.includes(t.flag)) {
+                matchedTeam = t.id;
+                break;
+            }
+        }
+        if (line.includes("FWC") || line.includes("Especiales")) {
+            currentTeamId = "fwc";
+            continue;
+        }
+        if (matchedTeam) {
+            currentTeamId = matchedTeam;
+            continue;
+        }
+        if (!currentTeamId)
+            continue;
+        if (mode === "missing" && line.startsWith("•")) {
+            // "• 03, 05, 08" o "• 03"
+            const nums = line.slice(1).split(",").map(s => s.trim()).filter(Boolean);
+            for (const n of nums) {
+                const padded = n.padStart(2, "0");
+                const id = currentTeamId === "fwc" ? `fwc-${padded}` : `${currentTeamId}-${padded}`;
+                missing.add(id);
+            }
+        }
+        if (mode === "repeated" && line.startsWith("•")) {
+            // "• 03 ×2" o "• fwc-03 ×2"
+            const match = line.match(/[•]\s*([\w-]+)\s*×(\d+)/);
+            if (match) {
+                const rawId = match[1];
+                const count = parseInt(match[2]);
+                // rawId could be "03" or "fwc-03"
+                let id;
+                if (rawId.startsWith("fwc")) {
+                    id = rawId;
+                }
+                else {
+                    const padded = rawId.padStart(2, "0");
+                    id = currentTeamId === "fwc" ? `fwc-${padded}` : `${currentTeamId}-${padded}`;
+                }
+                repeated.set(id, count);
+            }
+        }
+    }
+    return { missing, repeated };
+}
+function compareCollections(myCollection, friendText) {
+    const friend = parseExportText(friendText);
+    // puedo dar: mi repetida > 0 y mi amigo la necesita (mi amigo la tiene en missing) 
+    const canGive = new Map();
+    // puedo recibir: mi amigo tiene una repetida de algo q no tengo
+    const canReceive = new Map();
+    const allIds = [];
+    for (const t of TEAMS)
+        for (let i = 1; i <= 20; i++)
+            allIds.push(`${t.id}-${String(i).padStart(2, "0")}`);
+    for (let i = 0; i < FWC_TOTAL; i++)
+        allIds.push(`fwc-${String(i).padStart(2, "0")}`);
+    for (const id of allIds) {
+        const myRepeated = getRepeated(myCollection, id);
+        const iMissingIt = !getOwned(myCollection, id);
+        const friendMissingIt = friend.missing.has(id);
+        const friendHasRepeated = (friend.repeated.get(id) ?? 0) > 0;
+        const teamId = id.startsWith("fwc") ? "fwc" : id.split("-")[0];
+        if (myRepeated > 0 && friendMissingIt) {
+            if (!canGive.has(teamId))
+                canGive.set(teamId, []);
+            canGive.get(teamId).push(id);
+        }
+        if (iMissingIt && friendHasRepeated) {
+            if (!canReceive.has(teamId))
+                canReceive.set(teamId, []);
+            canReceive.get(teamId).push(id);
+        }
+    }
+    return { canGive, canReceive };
+}
+function generateTradeText(canGive, canReceive) {
+    const bar = "━━━━━━━━━━━━━━━";
+    const lines = [bar, "🤝 intercambio posible", bar, ""];
+    const getTeamInfo = (id) => {
+        if (id === "fwc")
+            return { flag: "🏆", name: "Especiales" };
+        return TEAMS.find(t => t.id === id) ?? { flag: "❓", name: id };
+    };
+    lines.push("📤 yo puedo darle", "");
+    if (canGive.size === 0) {
+        lines.push("Sin coincidencias", "");
+    }
+    else {
+        for (const [teamId, ids] of canGive) {
+            const t = getTeamInfo(teamId);
+            lines.push(`${t.flag} ${t.name}`);
+            lines.push(...ids.map(id => {
+                const num = id.split("-").pop() ?? id;
+                return `• ${num}`;
+            }));
+            lines.push("");
+        }
+    }
+    lines.push("📥 él puede darme", "");
+    if (canReceive.size === 0) {
+        lines.push("Sin coincidencias", "");
+    }
+    else {
+        for (const [teamId, ids] of canReceive) {
+            const t = getTeamInfo(teamId);
+            lines.push(`${t.flag} ${t.name}`);
+            lines.push(...ids.map(id => {
+                const num = id.split("-").pop() ?? id;
+                return `• ${num}`;
+            }));
+            lines.push("");
+        }
+    }
+    return lines.join("\n");
+}
+function exportJSON(collection) {
+    const obj = {};
+    collection.forEach((v, k) => { if (v.owned || v.repeated > 0)
+        obj[k] = v; });
+    return JSON.stringify(obj, null, 2);
+}
+function importJSON(jsonStr, collection) {
+    const obj = JSON.parse(jsonStr);
+    for (const [k, v] of Object.entries(obj)) {
+        collection.set(k, { owned: !!v.owned, repeated: v.repeated ?? 0 });
+    }
+}
+function exportCSV(collection) {
+    const rows = ["id,owned,repeated"];
+    collection.forEach((v, k) => {
+        if (v.owned || v.repeated > 0) {
+            rows.push(`${k},${v.owned ? 1 : 0},${v.repeated}`);
+        }
+    });
+    return rows.join("\n");
+}
+function importCSV(csv, collection) {
+    const lines = csv.split("\n").slice(1);
+    for (const line of lines) {
+        const [id, owned, repeated] = line.split(",");
+        if (id)
+            collection.set(id.trim(), { owned: owned?.trim() === "1", repeated: parseInt(repeated ?? "0") || 0 });
+    }
+}
+
+
+// ============================================================
+// main: renderizar ui + entry point
+// ============================================================
+
+
+
+// ---- State ----
+let collection = new Map();
+let viewMode = "grid";
+let activeTab = "album";
+let searchQuery = "";
+let isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+// ---- DOM helpers ----
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+function fmtNum(n) { return String(n).padStart(2, "0"); }
+// ---- Stats ----
+function getTeamStats(teamId, count, prefix) {
+    let owned = 0, totalRepeated = 0;
+    for (let i = 1; i <= count; i++) {
+        const id = `${prefix}${fmtNum(i)}`;
+        if (getOwned(collection, id))
+            owned++;
+        totalRepeated += getRepeated(collection, id);
+    }
+    return { owned, missing: count - owned, repeated: totalRepeated, total: count };
+}
+function getFWCStats() {
+    let owned = 0, totalRepeated = 0;
+    for (let i = 0; i < FWC_TOTAL; i++) {
+        const id = `fwc-${fmtNum(i)}`;
+        if (getOwned(collection, id))
+            owned++;
+        totalRepeated += getRepeated(collection, id);
+    }
+    return { owned, missing: FWC_TOTAL - owned, repeated: totalRepeated, total: FWC_TOTAL };
+}
+function getGlobalStats() {
+    let owned = 0, totalRepeated = 0;
+    const total = TOTAL_STICKERS;
+    for (const t of TEAMS) {
+        for (let i = 1; i <= t.count; i++) {
+            const id = `${t.id}-${fmtNum(i)}`;
+            if (getOwned(collection, id))
+                owned++;
+            totalRepeated += getRepeated(collection, id);
+        }
+    }
+    for (let i = 0; i < FWC_TOTAL; i++) {
+        const id = `fwc-${fmtNum(i)}`;
+        if (getOwned(collection, id))
+            owned++;
+        totalRepeated += getRepeated(collection, id);
+    }
+    return { owned, missing: total - owned, repeated: totalRepeated, total };
+}
+// ---- toggle de las figuritas ----
+function handleStickerClick(e) {
+    const target = e.target;
+    const cell = target.closest("[data-sticker]");
+    if (!cell)
+        return;
+    const id = cell.dataset.sticker;
+    toggleOwned(collection, id);
+    scheduleSave(collection);
+    updateStickerCell(cell, id);
+    updateSectionStats(cell.closest(".team-section"));
+    updateGlobalStats();
+}
+function handleRepeatBtn(e) {
+    const btn = e.target.closest("[data-repeat]");
+    if (!btn)
+        return;
+    const id = btn.dataset.repeatId;
+    const delta = btn.dataset.repeat === "+" ? 1 : -1;
+    adjustRepeated(collection, id, delta);
+    scheduleSave(collection);
+    const countEl = btn.closest(".repeat-row")?.querySelector(".repeat-count");
+    if (countEl)
+        countEl.textContent = String(getRepeated(collection, id));
+    updateSectionStats(btn.closest(".team-section"));
+    updateGlobalStats();
+}
+function updateStickerCell(cell, id) {
+    const owned = getOwned(collection, id);
+    cell.classList.toggle("owned", owned);
+    cell.setAttribute("aria-pressed", String(owned));
+}
+function updateSectionStats(section) {
+    if (!section)
+        return;
+    const statEl = section.querySelector(".section-stat");
+    if (!statEl)
+        return;
+    const teamId = section.dataset.teamId;
+    if (!teamId)
+        return;
+    let owned = 0, total = 0, repeated = 0;
+    if (teamId === "fwc") {
+        ({ owned, total, repeated } = getFWCStats());
+    }
+    else {
+        const team = TEAMS.find(t => t.id === teamId);
+        if (!team)
+            return;
+        ({ owned, total, repeated } = getTeamStats(team.id, team.count, `${team.id}-`));
+    }
+    const pct = Math.round((owned / total) * 100);
+    statEl.textContent = `${owned}/${total} (${pct}%)${repeated > 0 ? ` · 🔁 ${repeated}` : ""}`;
+    const bar = section.querySelector(".progress-bar-inner");
+    if (bar)
+        bar.style.width = `${pct}%`;
+}
+function updateGlobalStats() {
+    const stats = getGlobalStats();
+    const pct = Math.round((stats.owned / stats.total) * 100);
+    const el = $(".global-stat-text");
+    if (el)
+        el.textContent = `${stats.owned}/${stats.total} completadas (${pct}%) · ❌ ${stats.missing} faltantes · 🔁 ${stats.repeated} repetidas`;
+    const bar = $(".global-bar-inner");
+    if (bar)
+        bar.style.width = `${pct}%`;
+}
+// ---- render cuadricula de las figus ----
+function renderStickerGrid(teamId, count, prefix) {
+    let html = '<div class="sticker-grid">';
+    for (let i = 1; i <= count; i++) {
+        const id = `${prefix}${fmtNum(i)}`;
+        const owned = getOwned(collection, id);
+        html += `<button class="sticker-cell${owned ? " owned" : ""}" data-sticker="${id}" aria-label="Figurita ${id}" aria-pressed="${owned}" title="${id}">
+      <span class="sticker-num">${fmtNum(i)}</span>
+    </button>`;
+    }
+    html += "</div>";
+    return html;
+}
+function renderStickerGridFWC() {
+    let html = '<div class="sticker-grid">';
+    for (let i = 0; i < FWC_TOTAL; i++) {
+        const id = `fwc-${fmtNum(i)}`;
+        const owned = getOwned(collection, id);
+        const cat = FWC_CATEGORIES.find(c => c.numbers.includes(i));
+        html += `<button class="sticker-cell fwc${owned ? " owned" : ""}" data-sticker="${id}" aria-label="Figurita ${id}" aria-pressed="${owned}" title="${id} ${cat?.name ?? ""}">
+      <span class="sticker-num">${fmtNum(i)}</span>
+    </button>`;
+    }
+    html += "</div>";
+    return html;
+}
+// ---- render lista de figus ----
+function renderStickerList(teamId, count, prefix) {
+    let html = '<div class="sticker-list">';
+    for (let i = 1; i <= count; i++) {
+        const id = `${prefix}${fmtNum(i)}`;
+        const owned = getOwned(collection, id);
+        const rep = getRepeated(collection, id);
+        html += `<div class="sticker-list-row">
+      <button class="sticker-cell list-cell${owned ? " owned" : ""}" data-sticker="${id}" aria-pressed="${owned}">
+        <span class="check-icon">${owned ? "☑" : "☐"}</span>
+        <span class="sticker-num">${fmtNum(i)}</span>
+      </button>
+      <div class="repeat-row">
+        <button class="repeat-btn" data-repeat="-" data-repeat-id="${id}" aria-label="Quitar repetida">−</button>
+        <span class="repeat-count">${rep}</span>
+        <button class="repeat-btn" data-repeat="+" data-repeat-id="${id}" aria-label="Agregar repetida">+</button>
+      </div>
+    </div>`;
+    }
+    html += "</div>";
+    return html;
+}
+function renderStickerListFWC() {
+    let html = '<div class="sticker-list">';
+    for (let i = 0; i < FWC_TOTAL; i++) {
+        const id = `fwc-${fmtNum(i)}`;
+        const owned = getOwned(collection, id);
+        const rep = getRepeated(collection, id);
+        const cat = FWC_CATEGORIES.find(c => c.numbers.includes(i));
+        html += `<div class="sticker-list-row">
+      <button class="sticker-cell list-cell fwc${owned ? " owned" : ""}" data-sticker="${id}" aria-pressed="${owned}">
+        <span class="check-icon">${owned ? "☑" : "☐"}</span>
+        <span class="sticker-num">${fmtNum(i)} <small>${cat?.icon ?? ""}</small></span>
+      </button>
+      <div class="repeat-row">
+        <button class="repeat-btn" data-repeat="-" data-repeat-id="${id}" aria-label="Quitar">−</button>
+        <span class="repeat-count">${rep}</span>
+        <button class="repeat-btn" data-repeat="+" data-repeat-id="${id}" aria-label="Agregar">+</button>
+      </div>
+    </div>`;
+    }
+    html += "</div>";
+    return html;
+}
+// ---- renderizar el album completo ----
+function renderAlbum() {
+    const q = searchQuery.toLowerCase();
+    let html = "";
+    // seccion FWC
+    const fwcStats = getFWCStats();
+    const fwcPct = Math.round((fwcStats.owned / fwcStats.total) * 100);
+    const fwcVisible = !q || "fwc especiales camino mundial historia balón".includes(q);
+    if (fwcVisible) {
+        html += `<section class="team-section" data-team-id="fwc">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="team-flag">🏆</span>
+          <span class="team-name">FWC — Especiales</span>
+        </div>
+        <span class="section-stat">${fwcStats.owned}/${fwcStats.total} (${fwcPct}%)${fwcStats.repeated > 0 ? ` · 🔁 ${fwcStats.repeated}` : ""}</span>
+      </div>
+      <div class="progress-bar"><div class="progress-bar-inner" style="width:${fwcPct}%"></div></div>
+      ${viewMode === "grid" ? renderStickerGridFWC() : renderStickerListFWC()}
+    </section>`;
+    }
+    // secciones de las selecciones
+    for (const team of TEAMS) {
+        if (q && !`${team.name} ${team.id} ${team.flag} grupo ${team.group}`.toLowerCase().includes(q))
+            continue;
+        const s = getTeamStats(team.id, team.count, `${team.id}-`);
+        const pct = Math.round((s.owned / s.total) * 100);
+        html += `<section class="team-section" data-team-id="${team.id}">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="team-flag">${team.flag}</span>
+          <span class="team-name">${team.name}</span>
+          <span class="group-badge">G${team.group}</span>
+        </div>
+        <span class="section-stat">${s.owned}/${s.total} (${pct}%)${s.repeated > 0 ? ` · 🔁 ${s.repeated}` : ""}</span>
+      </div>
+      <div class="progress-bar"><div class="progress-bar-inner" style="width:${pct}%"></div></div>
+      ${viewMode === "grid" ? renderStickerGrid(team.id, team.count, `${team.id}-`) : renderStickerList(team.id, team.count, `${team.id}-`)}
+    </section>`;
+    }
+    return html || `<div class="empty-state">No se encontraron resultados para "${searchQuery}"</div>`;
+}
+// ---- Render me faltan ----
+function renderMissing() {
+    let html = "";
+    const q = searchQuery.toLowerCase();
+    // FWC me falta
+    const fwcMissing = [];
+    for (let i = 0; i < FWC_TOTAL; i++) {
+        if (!getOwned(collection, `fwc-${fmtNum(i)}`))
+            fwcMissing.push(i);
+    }
+    if (fwcMissing.length && (!q || "fwc especiales".includes(q))) {
+        html += `<div class="missing-group">
+      <h3>🏆 FWC — Especiales <span class="missing-count">${fwcMissing.length} faltantes</span></h3>
+      <div class="missing-nums">${fwcMissing.map(n => `<span class="missing-badge" data-sticker="fwc-${fmtNum(n)}">${fmtNum(n)}</span>`).join("")}</div>
+    </div>`;
+    }
+    for (const team of TEAMS) {
+        if (q && !`${team.name} ${team.id} ${team.flag}`.toLowerCase().includes(q))
+            continue;
+        const missing = [];
+        for (let i = 1; i <= team.count; i++) {
+            if (!getOwned(collection, `${team.id}-${fmtNum(i)}`))
+                missing.push(i);
+        }
+        if (missing.length) {
+            html += `<div class="missing-group">
+        <h3>${team.flag} ${team.name} <span class="missing-count">${missing.length} faltantes</span></h3>
+        <div class="missing-nums">${missing.map(n => `<span class="missing-badge" data-sticker="${team.id}-${fmtNum(n)}">${fmtNum(n)}</span>`).join("")}</div>
+      </div>`;
+        }
+    }
+    return html || `<div class="empty-state">¡Álbum completo! 🎉</div>`;
+}
+// ---- Render repetidas  ----
+function renderRepeated() {
+    let html = "";
+    const q = searchQuery.toLowerCase();
+    // FWC repetidas
+    const fwcReps = [];
+    for (let i = 0; i < FWC_TOTAL; i++) {
+        const r = getRepeated(collection, `fwc-${fmtNum(i)}`);
+        if (r > 0)
+            fwcReps.push({ n: i, r });
+    }
+    if (fwcReps.length && (!q || "fwc especiales".includes(q))) {
+        html += `<div class="repeated-group">
+      <h3>🏆 FWC — Especiales</h3>
+      ${fwcReps.map(({ n, r }) => {
+            const id = `fwc-${fmtNum(n)}`;
+            return `<div class="repeat-item">
+          <span class="rep-id">${id}</span>
+          <div class="repeat-row">
+            <button class="repeat-btn" data-repeat="-" data-repeat-id="${id}">−</button>
+            <span class="repeat-count">${r}</span>
+            <button class="repeat-btn" data-repeat="+" data-repeat-id="${id}">+</button>
+          </div>
+        </div>`;
+        }).join("")}
+    </div>`;
+    }
+    for (const team of TEAMS) {
+        if (q && !`${team.name} ${team.id} ${team.flag}`.toLowerCase().includes(q))
+            continue;
+        const reps = [];
+        for (let i = 1; i <= team.count; i++) {
+            const id = `${team.id}-${fmtNum(i)}`;
+            const r = getRepeated(collection, id);
+            if (r > 0)
+                reps.push({ i, r });
+        }
+        if (reps.length) {
+            html += `<div class="repeated-group">
+        <h3>${team.flag} ${team.name}</h3>
+        ${reps.map(({ i, r }) => {
+                const id = `${team.id}-${fmtNum(i)}`;
+                return `<div class="repeat-item">
+            <span class="rep-id">${id}</span>
+            <div class="repeat-row">
+              <button class="repeat-btn" data-repeat="-" data-repeat-id="${id}">−</button>
+              <span class="repeat-count">${r}</span>
+              <button class="repeat-btn" data-repeat="+" data-repeat-id="${id}">+</button>
+            </div>
+          </div>`;
+            }).join("")}
+      </div>`;
+        }
+    }
+    return html || `<div class="empty-state">Sin repetidas todavía</div>`;
+}
+// ---- render compartir o copiar ----
+function renderShare() {
+    const text = generateShareText(collection);
+    return `<div class="share-panel">
+    <div class="share-actions">
+      <button class="btn-primary" id="btn-copy-share">📋 Copiar al portapapeles</button>
+      <div class="dropdown-group">
+        <button class="btn-secondary" id="btn-export-json">⬇ Exportar JSON</button>
+        <button class="btn-secondary" id="btn-export-csv">⬇ Exportar CSV</button>
+        <button class="btn-secondary" id="btn-export-txt">⬇ Exportar TXT</button>
+      </div>
+      <button class="btn-secondary" id="btn-import">⬆ Importar</button>
+    </div>
+    <pre class="share-preview" id="share-text">${escapeHtml(text)}</pre>
+    <input type="file" id="import-file" accept=".json,.csv,.txt" style="display:none">
+  </div>`;
+}
+// ---- render trade ----
+function renderTrade() {
+    return `<div class="trade-panel">
+    <h3>🤝 Comparar con un amigo</h3>
+    <p class="trade-hint">Pegá el texto exportado de tu amigo para ver qué pueden intercambiar:</p>
+    <textarea id="friend-text" class="friend-textarea" placeholder="Pegá aquí el texto exportado de tu amigo..." rows="10"></textarea>
+    <button class="btn-primary" id="btn-compare">Comparar colecciones</button>
+    <div id="trade-result"></div>
+  </div>`;
+}
+function escapeHtml(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+// ---- render principal ----
+function renderContent() {
+    const content = $(".content");
+    if (!content)
+        return;
+    switch (activeTab) {
+        case "album":
+            content.innerHTML = renderAlbum();
+            break;
+        case "missing":
+            content.innerHTML = renderMissing();
+            break;
+        case "repeated":
+            content.innerHTML = renderRepeated();
+            break;
+        case "share": {
+            content.innerHTML = renderShare();
+            bindShareEvents();
+            break;
+        }
+        case "trade": {
+            content.innerHTML = renderTrade();
+            bindTradeEvents();
+            break;
+        }
+    }
+    updateGlobalStats();
+}
+function bindShareEvents() {
+    $(".content").addEventListener("click", (e) => {
+        const btn = e.target.id;
+        if (btn === "btn-copy-share") {
+            const text = generateShareText(collection);
+            navigator.clipboard.writeText(text).then(() => showToast("¡Copiado!"));
+        }
+        else if (btn === "btn-export-json") {
+            downloadFile("coleccion.json", exportJSON(collection), "application/json");
+        }
+        else if (btn === "btn-export-csv") {
+            downloadFile("coleccion.csv", exportCSV(collection), "text/csv");
+        }
+        else if (btn === "btn-export-txt") {
+            downloadFile("coleccion.txt", generateShareText(collection), "text/plain");
+        }
+        else if (btn === "btn-import") {
+            $("input#import-file").click();
+        }
+    });
+    const fileInput = $("input#import-file");
+    if (fileInput) {
+        fileInput.addEventListener("change", async () => {
+            const file = fileInput.files?.[0];
+            if (!file)
+                return;
+            const text = await file.text();
+            try {
+                if (file.name.endsWith(".json"))
+                    importJSON(text, collection);
+                else if (file.name.endsWith(".csv"))
+                    importCSV(text, collection);
+                else
+                    importJSON(text, collection); // try JSON for .txt
+                scheduleSave(collection);
+                showToast("¡Importado correctamente!");
+                renderContent();
+            }
+            catch {
+                showToast("Error al importar el archivo");
+            }
+        });
+    }
+}
+function bindTradeEvents() {
+    $(".content").addEventListener("click", (e) => {
+        if (e.target.id !== "btn-compare")
+            return;
+        const friendText = $("textarea#friend-text").value.trim();
+        if (!friendText) {
+            showToast("Pegá el texto de tu amigo primero");
+            return;
+        }
+        const { canGive, canReceive } = compareCollections(collection, friendText);
+        const tradeText = generateTradeText(canGive, canReceive);
+        const result = $(".content #trade-result");
+        if (result) {
+            result.innerHTML = `<pre class="share-preview">${escapeHtml(tradeText)}</pre>
+        <button class="btn-primary" id="btn-copy-trade">📋 Copiar intercambio</button>`;
+            result.addEventListener("click", (e) => {
+                if (e.target.id === "btn-copy-trade") {
+                    navigator.clipboard.writeText(tradeText).then(() => showToast("¡Copiado!"));
+                }
+            }, { once: true });
+        }
+    });
+}
+function downloadFile(name, content, mime) {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+function showToast(msg) {
+    const t = document.createElement("div");
+    t.className = "toast";
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.classList.add("toast-show"), 10);
+    setTimeout(() => { t.classList.remove("toast-show"); setTimeout(() => t.remove(), 300); }, 2500);
+}
+// ---- event bindings ----
+function bindEvents() {
+    // navegacion en tablas
+    document.addEventListener("click", (e) => {
+        const tab = e.target.closest("[data-tab]");
+        if (tab) {
+            activeTab = tab.dataset.tab;
+            $$("[data-tab]").forEach(t => t.classList.remove("active"));
+            tab.classList.add("active");
+            renderContent();
+        }
+        // Missing badge click → mark as owned
+        const badge = e.target.closest(".missing-badge");
+        if (badge?.dataset.sticker) {
+            const id = badge.dataset.sticker;
+            toggleOwned(collection, id);
+            scheduleSave(collection);
+            badge.classList.toggle("owned-badge");
+            updateGlobalStats();
+        }
+    });
+    // grid de stickers/click
+    const content = $(".content");
+    content.addEventListener("click", (e) => {
+        handleStickerClick(e);
+        handleRepeatBtn(e);
+    });
+    // toggle del view
+    $(".btn-view-grid")?.addEventListener("click", () => setViewMode("grid"));
+    $(".btn-view-list")?.addEventListener("click", () => setViewMode("list"));
+    // busqueda
+    const searchEl = $(".search-input");
+    if (searchEl) {
+        searchEl.addEventListener("input", () => {
+            searchQuery = searchEl.value;
+            if (activeTab === "album" || activeTab === "missing" || activeTab === "repeated")
+                renderContent();
+        });
+    }
+    // tooggle del theme
+    $(".btn-theme")?.addEventListener("click", () => {
+        isDark = !isDark;
+        document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
+        $(".btn-theme").textContent = isDark ? "☀️" : "🌙";
+    });
+}
+function setViewMode(mode) {
+    viewMode = mode;
+    $(".btn-view-grid")?.classList.toggle("active", mode === "grid");
+    $(".btn-view-list")?.classList.toggle("active", mode === "list");
+    if (activeTab === "album")
+        renderContent();
+}
+// ---- bootstrap ----
+async function main() {
+    collection = await loadCollection();
+    document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
+    renderContent();
+    bindEvents();
+    updateGlobalStats();
+}
+main();
+
+</script>
+</body>
+</html>
